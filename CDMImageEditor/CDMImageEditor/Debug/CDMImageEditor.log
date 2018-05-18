@@ -1,0 +1,11 @@
+﻿  main.cpp
+  CDMWindow.cpp
+c:\users\komo97\source\repos\cdmimageeditor\cdmimageeditor\cdmwindow.cpp(187): warning C4018: '>': signed/unsigned mismatch
+  CDMTextWindow.cpp
+c:\users\komo97\source\repos\cdmimageeditor\cdmimageeditor\cdmtextwindow.cpp(29): warning C4018: '<': signed/unsigned mismatch
+  CDMTextInputWindow.cpp
+  CDMTextInput.cpp
+  CDMMouseInputWindow.cpp
+  CDMMenuWindow.cpp
+  Generating Code...
+  CDMImageEditor.vcxproj -> C:\Users\komo97\Source\Repos\CDMImageEditor\Debug\CDMImageEditor.exe
