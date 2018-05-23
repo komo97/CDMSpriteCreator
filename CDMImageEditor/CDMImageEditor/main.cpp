@@ -29,6 +29,7 @@ int main()
 	CDMSetWindowTitle(L"CDM Image Editor");
 	CDMChangeWindowSize(&ctx, WIDTH, HEIGHT);
 	CDMActivateMouseInput(&ctx);
+	CDMSetCursorVisibility(&ctx, CDMFalse);
 	SetupImage();
 	DrawImage();
 	SaveImage();
@@ -57,6 +58,9 @@ void EditCallback(CDMButton& button, void* param)
 	CDMSetCharacters(&image, L'C', L'D', L'G', L'I');
 	CDMSetBackgroundColor(&image, CDMBackgroundColor::BWHITE, CDMBackgroundColor::BWHITE, CDMBackgroundColor::BWHITE, CDMBackgroundColor::BWHITE);
 	CDMSetForegroundColor(&image, CDMLetterColor::BLACK, CDMLetterColor::BLACK, CDMLetterColor::BLACK, CDMLetterColor::BLACK);
+	GetConsoleScreenBufferInfoEx(ctx->mainBuffer, &ctx->inf);
+	for (int i = 0; i < 16; ++i)
+		scheme.colors[i] = ctx->inf.ColorTable[i];
 }
 
 void SetCallback(CDMButton& button, void* param)
@@ -109,6 +113,12 @@ void SaveCallback(CDMButton& button, void* param)
 	std::wstring_convert<convert_type, wchar_t> converter;
 	std::string converted_str = converter.to_bytes(iName);
 	CDMExportSrfcToImg(ctx, image, converted_str.data(), converted_str.size());
+}
+
+void ChangeSchemeCallback(CDMButton& button, void* param)
+{
+	CDMSetActiveScheme(scheme, &ctx);
+	CDMChangeWindowSize(&ctx, WIDTH, HEIGHT);
 }
 
 void SetupImage()
@@ -166,7 +176,7 @@ void DrawImage()
 {
 #pragma region variable declaration
 	bool endCycle = false;
-	CDMColorSets set1 = Set1, set2 = Set2, set3 = Set3, set4 = Set4;
+	CDMColorSets set1 = Set1, set2 = Set2, set3 = Set3, set4 = Set4, set5 = SetAlpha;
 	CDMLetterColor l1 = LCOLOR1, l2 = LCOLOR2, l3 = LCOLOR3, l4 = LCOLOR4, l5 = LCOLOR5,
 		l6 = LCOLOR6, l7 = LCOLOR7, l8 = LCOLOR8, l9 = LCOLOR9, l10 = LCOLOR10,
 		l11 = LCOLOR11, l12 = LCOLOR12, l13 = LCOLOR13, l14 = LCOLOR14, l15 = LCOLOR15, l16 = LCOLOR16;
@@ -175,7 +185,8 @@ void DrawImage()
 		b14 = BCOLOR14, b15 = BCOLOR15, b16 = BCOLOR16;
 	CDMMouseInputWindow canvas;
 	CDMButton set1B(L"1",SetCallback,(void*)&set1), set2B(L"2", SetCallback, (void*)&set2),
-		set3B(L"3", SetCallback, (void*)&set3), set4B(L"4", SetCallback, (void*)&set4);
+		set3B(L"3", SetCallback, (void*)&set3), set4B(L"4", SetCallback, (void*)&set4),
+		clear(L"Cl", SetCallback, (void*)&set5);
 	CDMTextInputWindow	set1C(CDMKey::KeysEnd,CDMTextInput::InputType::Numeric), 
 						set2C(CDMKey::KeysEnd, CDMTextInput::InputType::Numeric), 
 						set3C(CDMKey::KeysEnd, CDMTextInput::InputType::Numeric), 
@@ -261,6 +272,7 @@ void DrawImage()
 				bcs15(L"B15", BackgroundCallback, (void*)&b15), 
 				bcs16(L"B16", BackgroundCallback, (void*)&b16);
 	CDMButton endDrawing(L"Exit and save", SaveCallback, (void*)&endCycle);
+	CDMButton changeScheme(L"Apply color scheme", ChangeSchemeCallback, nullptr);
 #pragma endregion
 
 #pragma region setup
@@ -279,6 +291,10 @@ void DrawImage()
 	set4B.posX = 25;
 	set4B.posY = HEIGHT - 5;
 	set4B.SetupWindow(3, 3, CDMLetterColor::WHITE, CDMBackgroundColor::BBLACK);
+
+	clear.posX = 30;
+	clear.posY = HEIGHT - 5;
+	clear.SetupWindow(3, 3, CDMLetterColor::WHITE, CDMBackgroundColor::BBLACK);
 
 	CDMCoord relativeMousePos = { 0,0 };
 	canvas.posX = (WIDTH / 2) - (imageWidth/2) - 1;
@@ -651,6 +667,10 @@ void DrawImage()
 	bc16.SetupWindow(5, 4, CDMLetterColor::WHITE, CDMBackgroundColor::BBLACK);
 	bc16.SetText(std::to_wstring(CDMGetB(&scheme, 15)));
 
+	changeScheme.posX = WIDTH - 22;
+	changeScheme.posY = 95;
+	changeScheme.SetupWindow(20,4, CDMLetterColor::WHITE, CDMBackgroundColor::BBLACK);
+
 	lcs1.posX = 1;
 	lcs1.posY = 10;
 	lcs1.SetTitle(L"LC1");
@@ -856,6 +876,9 @@ void DrawImage()
 		set4C.Update(ctx);
 		set4C.Draw(ctx);
 
+		clear.Update(ctx);
+		clear.Draw(ctx);
+
 		if (set1C.GetText().size() > 0)
 			image->pallete.p1.character = std::stoi(set1C.GetText());
 		if (set2C.GetText().size() > 0)
@@ -1019,6 +1042,9 @@ void DrawImage()
 		bc16.Update(ctx);
 		bc16.Draw(ctx);
 
+		changeScheme.Update(ctx);
+		changeScheme.Draw(ctx);
+
 		CDMPoke(&ctx, CDMCoord{ (SHORT)rc1.posX - 2, (SHORT)rc1.posY }, L' ', LCOLOR1, BCOLOR1);
 		CDMPoke(&ctx, CDMCoord{ (SHORT)rc2.posX - 2, (SHORT)rc2.posY }, L' ', LCOLOR2, BCOLOR2);
 		CDMPoke(&ctx, CDMCoord{ (SHORT)rc3.posX - 2, (SHORT)rc3.posY }, L' ', LCOLOR3, BCOLOR3);
@@ -1134,6 +1160,56 @@ void DrawImage()
 
 		endDrawing.Update(ctx);
 		endDrawing.Draw(ctx);
+
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs1.posX + 5, (SHORT)bcs1.posY + 1 }, L' ', LCOLOR1, BCOLOR1);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs2.posX + 5, (SHORT)bcs2.posY + 1 }, L' ', LCOLOR2, BCOLOR2);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs3.posX + 5, (SHORT)bcs3.posY + 1 }, L' ', LCOLOR3, BCOLOR3);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs4.posX + 5, (SHORT)bcs4.posY + 1 }, L' ', LCOLOR4, BCOLOR4);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs5.posX + 5, (SHORT)bcs5.posY + 1 }, L' ', LCOLOR5, BCOLOR5);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs6.posX + 5, (SHORT)bcs6.posY + 1 }, L' ', LCOLOR6, BCOLOR6);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs7.posX + 5, (SHORT)bcs7.posY + 1 }, L' ', LCOLOR7, BCOLOR7);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs8.posX + 5, (SHORT)bcs8.posY + 1 }, L' ', LCOLOR8, BCOLOR8);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs9.posX + 5, (SHORT)bcs9.posY + 1 }, L' ', LCOLOR9, BCOLOR9);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs10.posX + 5, (SHORT)bcs10.posY + 1 }, L' ', LCOLOR10, BCOLOR10);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs11.posX + 5, (SHORT)bcs11.posY + 1 }, L' ', LCOLOR11, BCOLOR11);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs12.posX + 5, (SHORT)bcs12.posY + 1 }, L' ', LCOLOR12, BCOLOR12);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs13.posX + 5, (SHORT)bcs13.posY + 1 }, L' ', LCOLOR13, BCOLOR13);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs14.posX + 5, (SHORT)bcs14.posY + 1 }, L' ', LCOLOR14, BCOLOR14);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs15.posX + 5, (SHORT)bcs15.posY + 1 }, L' ', LCOLOR15, BCOLOR15);
+		CDMPoke(&ctx, CDMCoord{ (SHORT)bcs16.posX + 5, (SHORT)bcs16.posY + 1 }, L' ', LCOLOR16, BCOLOR16);
+
+		if (rc1.GetText().size() > 0 && gc1.GetText().size() > 0 && bc1.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 0, std::stoi(rc1.GetText()), std::stoi(gc1.GetText()), std::stoi(bc1.GetText()));
+		if (rc2.GetText().size() > 0 && gc2.GetText().size() > 0 && bc2.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 1, std::stoi(rc2.GetText()), std::stoi(gc2.GetText()), std::stoi(bc2.GetText()));
+		if (rc3.GetText().size() > 0 && gc3.GetText().size() > 0 && bc3.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 2, std::stoi(rc3.GetText()), std::stoi(gc3.GetText()), std::stoi(bc3.GetText()));
+		if (rc4.GetText().size() > 0 && gc4.GetText().size() > 0 && bc4.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 3, std::stoi(rc4.GetText()), std::stoi(gc4.GetText()), std::stoi(bc4.GetText()));
+		if (rc5.GetText().size() > 0 && gc5.GetText().size() > 0 && bc5.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 4, std::stoi(rc5.GetText()), std::stoi(gc5.GetText()), std::stoi(bc5.GetText()));
+		if (rc6.GetText().size() > 0 && gc6.GetText().size() > 0 && bc6.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 5, std::stoi(rc6.GetText()), std::stoi(gc6.GetText()), std::stoi(bc6.GetText()));
+		if (rc7.GetText().size() > 0 && gc7.GetText().size() > 0 && bc7.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 6, std::stoi(rc7.GetText()), std::stoi(gc7.GetText()), std::stoi(bc7.GetText()));
+		if (rc8.GetText().size() > 0 && gc8.GetText().size() > 0 && bc8.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 7, std::stoi(rc8.GetText()), std::stoi(gc8.GetText()), std::stoi(bc8.GetText()));
+		if (rc9.GetText().size() > 0 && gc9.GetText().size() > 0 && bc9.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 8, std::stoi(rc9.GetText()), std::stoi(gc9.GetText()), std::stoi(bc9.GetText()));
+		if (rc10.GetText().size() > 0 && gc10.GetText().size() > 0 && bc10.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 9, std::stoi(rc10.GetText()), std::stoi(gc10.GetText()), std::stoi(bc10.GetText()));
+		if (rc11.GetText().size() > 0 && gc11.GetText().size() > 0 && bc11.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 10, std::stoi(rc11.GetText()), std::stoi(gc11.GetText()), std::stoi(bc11.GetText()));
+		if (rc12.GetText().size() > 0 && gc12.GetText().size() > 0 && bc12.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 11, std::stoi(rc12.GetText()), std::stoi(gc12.GetText()), std::stoi(bc12.GetText()));
+		if (rc13.GetText().size() > 0 && gc13.GetText().size() > 0 && bc13.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 12, std::stoi(rc13.GetText()), std::stoi(gc13.GetText()), std::stoi(bc13.GetText()));
+		if (rc14.GetText().size() > 0 && gc14.GetText().size() > 0 && bc14.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 13, std::stoi(rc14.GetText()), std::stoi(gc14.GetText()), std::stoi(bc14.GetText()));
+		if (rc15.GetText().size() > 0 && gc15.GetText().size() > 0 && bc15.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 14, std::stoi(rc15.GetText()), std::stoi(gc15.GetText()), std::stoi(bc15.GetText()));
+		if (rc16.GetText().size() > 0 && gc16.GetText().size() > 0 && bc16.GetText().size() > 0)
+			CDMSetColorRGB(&scheme, 15, std::stoi(rc16.GetText()), std::stoi(gc16.GetText()), std::stoi(bc16.GetText()));
 
 		CDMPrintf(&ctx, 0, CDMRect{ (SHORT)bcs1.posX + 7, (SHORT)bcs1.posY, 15, 1 }, CDMLetterColor::WHITE, CDMBackgroundColor::BBLACK,
 			L"Current set: %d", currentSet == Set1 ? 1 : currentSet == Set2 ? 2 : currentSet == Set3 ? 3 : 4);

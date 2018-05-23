@@ -6,6 +6,7 @@ CDMWindow::CDMWindow()
 {
 	_dragStarted = false;
 	_shouldDrag = true;
+	_isActive = true;
 }
 
 CDMWindow::CDMWindow(const int & width, const int & height, const CDMLetterColor & bounds, const CDMBackgroundColor & background) : CDMWindow()
