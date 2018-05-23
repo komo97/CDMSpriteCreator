@@ -1,6 +1,5 @@
 #include "CDMTextInput.h"
 
-
 CDMTextInput::CDMTextInput(const CDMKey & closeKey, const size_t & maxInput, const InputType& type)
 {
 	_closeKey = closeKey;
@@ -253,58 +252,71 @@ void CDMTextInput::ReadInput(CDMEvent* const& events)
 			if (CDMGetKeyUp(events, CDMKey::one))
 			{
 				_text.insert(_text.begin() + _cursor, L'1');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::two))
 			{
 				_text.insert(_text.begin() + _cursor, L'2');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::three))
 			{
 				_text.insert(_text.begin() + _cursor, L'3');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::four))
 			{
 				_text.insert(_text.begin() + _cursor, L'4');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::five))
 			{
 				_text.insert(_text.begin() + _cursor, L'5');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::six))
 			{
 				_text.insert(_text.begin() + _cursor, L'6');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::seven))
 			{
 				_text.insert(_text.begin() + _cursor, L'7');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::eight))
 			{
 				_text.insert(_text.begin() + _cursor, L'8');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::nine))
 			{
 				_text.insert(_text.begin() + _cursor, L'9');
+				++_cursor;
 				return;
 			}
 			else if (CDMGetKeyUp(events, CDMKey::zero))
 			{
 				_text.insert(_text.begin() + _cursor, L'0');
+				++_cursor;
 				return;
 			}
-			else if (CDMGetKeyUp(events, CDMKey::decimal))
-
+			else if (CDMGetKeyUp(events, CDMKey::decimal) && inputType & AcceptDecimal)
+			{
+				_text.insert(_text.begin() + _cursor, L'.');
+				++_cursor;
 				return;
+			}
 		}
-		if (CDMGetKeyUp(events, CDMKey::backspace) && _text.size() > 0)
+		if (CDMGetKeyUp(events, CDMKey::backspace) && _text.size() > 0 && _cursor > 0)
 		{
 			_text.erase(_text.begin() + _cursor - 1, _text.begin() + _cursor);
 			--_cursor;
@@ -335,7 +347,7 @@ void CDMTextInput::DisplayText(CDMContext *& ctx, const CDMRect & displayArea, C
 	if (_text.size() > 0 && _isActive)
 	{
 		CDMPrintf(&ctx, 0, displayArea, let, bg, _text.data());
-		if (_blink)
+		if (_blink && _cursor != 0)
 			CDMPrintf(&ctx, 0, CDMRect{ displayArea.Left + (((SHORT)_cursor - 1) % displayArea.Right),
 				displayArea.Top + (((SHORT)_cursor -1) / displayArea.Right), 1, 1 },
 				let, (CDMBackgroundColor)(bg | reverseColors), L"%c", _text.at(_cursor - 1));
@@ -351,6 +363,12 @@ bool CDMTextInput::IsActive() const
 std::wstring CDMTextInput::GetText() const
 {
 	return _text;
+}
+
+void CDMTextInput::SetText(const std::wstring & text)
+{
+	_text = text;
+	_cursor = 1;
 }
 
 

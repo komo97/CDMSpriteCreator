@@ -1,8 +1,9 @@
 #pragma once
 #include "CDM.h"
+#include "CDMObject.h"
 #include <string>
 
-class CDMWindow
+class CDMWindow : public CDMObject
 {
 public:
 	CDMWindow();
@@ -18,12 +19,15 @@ public:
 	bool IsActive() const;
 	void SetActive(const bool& status);
 	void SetTitle(std::wstring title);
+	void ShouldDrag(const bool& dragable);
 	int posX = 0, posY = 0;
 private:
 	CDMSurface * _upperLeftBounds = nullptr,
 			   * _lowerLeftBounds = nullptr,
 			   * _upperRightBounds = nullptr,
 			   * _lowerRightBounds = nullptr;
+	CDMCoord _startDrag;
+	bool _dragStarted;
 protected:
 	CDMLetterColor _bounds;
 	CDMBackgroundColor _background;
@@ -32,8 +36,11 @@ protected:
 		_halfWidth,
 		_halfHeight;
 	bool _useParentColor = false,
-		 _isActive;
+		 _isActive,
+		 _shouldDrag;
 	std::wstring _title;
 	virtual void PostSetup();
+	virtual void OnDisable();
+	virtual void OnEnable();
 };
 

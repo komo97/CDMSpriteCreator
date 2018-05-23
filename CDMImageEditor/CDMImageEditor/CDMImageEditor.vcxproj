@@ -153,16 +153,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CDMButton.h" />
+    <ClInclude Include="CDMInputLocker.h" />
     <ClInclude Include="CDMMenuWindow.h" />
     <ClInclude Include="CDMMouseInputWindow.h" />
+    <ClInclude Include="CDMObject.h" />
     <ClInclude Include="CDMTextInput.h" />
     <ClInclude Include="CDMTextInputWindow.h" />
     <ClInclude Include="CDMTextWindow.h" />
     <ClInclude Include="CDMWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CDMButton.cpp" />
+    <ClCompile Include="CDMInputLocker.cpp" />
     <ClCompile Include="CDMMenuWindow.cpp" />
     <ClCompile Include="CDMMouseInputWindow.cpp" />
+    <ClCompile Include="CDMObject.cpp" />
     <ClCompile Include="CDMTextInput.cpp" />
     <ClCompile Include="CDMTextInputWindow.cpp" />
     <ClCompile Include="CDMTextWindow.cpp" />

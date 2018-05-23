@@ -1,5 +1,5 @@
 #include "CDMMouseInputWindow.h"
-
+#include "CDMInputLocker.h"
 
 
 CDMMouseInputWindow::CDMMouseInputWindow() : CDMWindow()
@@ -30,11 +30,22 @@ void CDMMouseInputWindow::Update(CDMContext* & ctx)
 	if (!_isActive)
 		return;
 	CDMWindow::Update(ctx);
-	CDMCoord temp = CDMGetMousePos(&ctx->events);
-	if (temp.X > 0)
-		_globalMousePos = temp;
-	if (CDMGetKeyUp(&ctx->events, _closeKey))
-		SetActive(false);
+	if (!CDMInputLocker::InControl(this))
+	{
+		CDMCoord mousePos = CDMGetMousePos(&ctx->events);
+		if (mousePos.X >= posX && mousePos.X <= _width - 1 + posX && mousePos.Y >= posY &&
+			mousePos.Y <= _height - 1 + posY &&
+			CDMGetKeyPressed(&ctx->events, CDMKey::mbleft))
+			CDMInputLocker::RequestPriority(this);
+	}
+	else
+	{
+		CDMCoord temp = CDMGetMousePos(&ctx->events);
+		if (temp.X > 0)
+			_globalMousePos = temp;
+		if (CDMGetKeyUp(&ctx->events, _closeKey))
+			SetActive(false);
+	}
 }
 
 void CDMMouseInputWindow::Draw(CDMContext *& ctx)

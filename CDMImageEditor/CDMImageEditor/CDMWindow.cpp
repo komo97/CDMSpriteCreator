@@ -1,12 +1,14 @@
 ﻿#include "CDMWindow.h"
-
+#include "CDMInputLocker.h"
 
 
 CDMWindow::CDMWindow()
 {
+	_dragStarted = false;
+	_shouldDrag = true;
 }
 
-CDMWindow::CDMWindow(const int & width, const int & height, const CDMLetterColor & bounds, const CDMBackgroundColor & background)
+CDMWindow::CDMWindow(const int & width, const int & height, const CDMLetterColor & bounds, const CDMBackgroundColor & background) : CDMWindow()
 {
 }
 
@@ -20,7 +22,6 @@ CDMWindow::~CDMWindow()
 		CDMFreeSurface(&_upperLeftBounds);
 	if (_lowerLeftBounds)
 		CDMFreeSurface(&_lowerLeftBounds);
-
 }
 
 int CDMWindow::getWidth() const
@@ -156,6 +157,8 @@ void CDMWindow::Draw(CDMContext* & ctx)
 	CDMAddSurfaceToContext(&ctx, _upperLeftBounds);
 	CDMAddSurfaceToContext(&ctx, _lowerRightBounds);
 	CDMPrintf(&ctx, 0, CDMRect{ (SHORT)posX + 1, (SHORT)posY, (SHORT)_width - 1, (SHORT)1 }, _bounds, _background, _title.data());
+	if (CDMInputLocker::InControl(this))
+		CDMPrintf(&ctx, 0, CDMRect{ (SHORT)posX + (SHORT)_width + 1, (SHORT)posY,1,1 }, _bounds, _background, L"X");
 }
 
 void CDMWindow::Update(CDMContext* & ctx)
@@ -170,6 +173,23 @@ void CDMWindow::Update(CDMContext* & ctx)
 	_upperLeftBounds->rect.Top = posY;
 	_lowerRightBounds->rect.Left = _halfWidth + posX + 1;
 	_lowerRightBounds->rect.Top = _halfHeight + posY + 1;
+	if (_shouldDrag)
+	{
+		CDMCoord mousePos = CDMGetMousePos(&ctx->events);
+		if (mousePos.X >= posX && mousePos.X <= _width - 1 + posX && mousePos.Y == posY &&
+			CDMGetKeyPressed(&ctx->events, CDMKey::mbleft))
+		{
+			_startDrag = CDMCoord{ mousePos.X - (SHORT)posX, mousePos.Y - (SHORT)posY};
+			_dragStarted = true;
+		}
+		if (!CDMGetKeyPressed(&ctx->events, CDMKey::mbleft))
+			_dragStarted = false;
+		if (_dragStarted)
+		{
+			posX = mousePos.X - _startDrag.X;
+			posY = mousePos.Y - _startDrag.Y;
+		}
+	}
 }
 
 bool CDMWindow::IsActive() const
@@ -179,6 +199,10 @@ bool CDMWindow::IsActive() const
 
 void CDMWindow::SetActive(const bool & status)
 {
+	if (_isActive && !status)
+		OnDisable();
+	else if (!_isActive && status)
+		OnEnable();
 	_isActive = status;
 }
 
@@ -193,6 +217,21 @@ void CDMWindow::SetTitle(std::wstring title)
 		_title = title;
 }
 
+void CDMWindow::ShouldDrag(const bool & dragable)
+{
+	_shouldDrag = dragable;
+}
+
 void CDMWindow::PostSetup()
 {
+}
+
+void CDMWindow::OnDisable()
+{
+	
+}
+
+void CDMWindow::OnEnable()
+{
+	CDMInputLocker::RequestPriority(this);
 }

@@ -1,8 +1,9 @@
 #pragma once
 #include "CDM.h"
+#include "CDMObject.h"
 #include <string>
 
-class CDMTextInput
+class CDMTextInput : public CDMObject
 {
 public:
 	enum InputType
@@ -11,6 +12,7 @@ public:
 		Numeric = 0x002,
 		AlphaNum = 0x003,
 		AcceptNewline = 0x010,
+		AcceptDecimal = 0x020,
 	}inputType;
 	CDMTextInput() = delete;
 	CDMTextInput(const CDMKey& closeKey, const size_t& maxInput, const InputType& type);
@@ -19,6 +21,7 @@ public:
 	void DisplayText(CDMContext *& ctx, const CDMRect& displayArea, CDMLetterColor let, CDMBackgroundColor bg);
 	bool IsActive() const;
 	std::wstring GetText() const;
+	void SetText(const std::wstring& text);
 	~CDMTextInput();
 private:
 	bool _isActive,

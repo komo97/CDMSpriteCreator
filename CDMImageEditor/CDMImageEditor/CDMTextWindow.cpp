@@ -1,23 +1,35 @@
 #include "CDMTextWindow.h"
+#include "CDMInputLocker.h"
 
 void CDMTextWindow::Update(CDMContext* & ctx)
 {
 	if (!_isActive)
 		return;
 	CDMWindow::Update(ctx);
-	if (_scrollKeyDown != KeysEnd && CDMGetKeyUp(&ctx->events, _scrollKeyDown))
-		++_currScroll;
-	if (_scrollKeyUp != KeysEnd && CDMGetKeyUp(&ctx->events, _scrollKeyUp) && _currScroll > 0)
-		--_currScroll;
-	if (CDMGetKeyUp(&ctx->events, _closeKey))
-		SetActive(false);
-	++_cursorPos;
-	if (_autoScroll)
-		_currScroll = (_cursorPos / (_width - 2)) / (_height - 2);
-	if (_currScroll > (_text.length() / _width))
-		_currScroll = (_text.length() / _width);
-	if (_cursorPos >= _text.length())
-		_cursorPos = _text.length();
+	if (!CDMInputLocker::InControl(this))
+	{
+		CDMCoord mousePos = CDMGetMousePos(&ctx->events);
+		if (mousePos.X >= posX && mousePos.X <= _width - 1 + posX && mousePos.Y >= posY &&
+			mousePos.Y <= _height - 1 + posY &&
+			CDMGetKeyPressed(&ctx->events, CDMKey::mbleft))
+			CDMInputLocker::RequestPriority(this);
+	}
+	else
+	{
+		if (_scrollKeyDown != KeysEnd && CDMGetKeyUp(&ctx->events, _scrollKeyDown))
+			++_currScroll;
+		if (_scrollKeyUp != KeysEnd && CDMGetKeyUp(&ctx->events, _scrollKeyUp) && _currScroll > 0)
+			--_currScroll;
+		if (CDMGetKeyUp(&ctx->events, _closeKey))
+			SetActive(false);
+		++_cursorPos;
+		if (_autoScroll)
+			_currScroll = (_cursorPos / (_width - 2)) / (_height - 2);
+		if (_currScroll > (_text.length() / _width))
+			_currScroll = (_text.length() / _width);
+		if (_cursorPos >= _text.length())
+			_cursorPos = _text.length();
+	}
 }
 
 void CDMTextWindow::Draw(CDMContext *& ctx)
